@@ -9,6 +9,8 @@ from copy import deepcopy
 import pandas as pd
 from scipy import stats
 
+from tbsU import potpourri
+
 
 #####################################
 # Helper Functions                  #
@@ -96,6 +98,21 @@ def convert_dates(df, cols=None, dformat=None, inplace=True):
 
     if not inplace:
         return cols, df
+    
+
+def clean_columns(columns, manual_dict={}):
+    cols = []
+    for col in columns:
+        if col in manual_dict:
+            cols.append(manual_dict[col])
+        else:
+            col = potpourri.clean_string(col)
+            cols.append(col)
+    if len(cols) != len(set(cols)):
+        err_text = ('Duplicate column names created when cleaning column names,'
+                    ' likely during conversion to snake_case.')
+        raise ValueError(err_text)
+    return cols
 
 
 def groupConcord(df, cols=None, within=[], pntCnt=False, dropids=False):

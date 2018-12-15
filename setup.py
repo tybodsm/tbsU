@@ -7,12 +7,16 @@ setup(name='tbsU',
       url='tylerbs.com',
       author='Tyler Bodine-Smith',
       author_email='tbs@tylerbs.com',
-      license='MIT',
+      license='AGPLv3',
       packages=find_packages(),
       install_requires=[
-          'tabulate',
-          'pandas',
-          'numpy',
-          'sqlalchemy',
+        'tabulate',
+        'pandas',
+        'numpy',
+        'sqlalchemy',
       ],
+      classifiers=[
+        "Programming Language :: Python :: 3.6",
+        "License :: OSI Approved :: MIT License",
+      ]
       )
