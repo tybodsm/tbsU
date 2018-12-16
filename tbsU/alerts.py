@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-Provides functionality for monitoring scripts and sending alerts through slack
+Provides functionality for monitoring scripts and sending alerts through slack.
 '''
 
 import functools
@@ -80,7 +80,7 @@ def _mothball_alerter(a):
 
 def alerters():
     adict = json.load(open(alerters_file))
-    out = {k: Alerter(v) for k, v in adict.items()}
+    out = {k: Alerter(v[0], v[1]) for k, v in adict.items()}
     return out
 
 
@@ -93,7 +93,12 @@ def store_channel(channels):
     '''
     channels: dictionary
         Takes a dict of form {'channel_id': 'webhook_key'} and stores them for later use
+
+    The webhook_key is simply the webhook url from slack. If you want to use alerters
+        (i.e. custom icons/usernames) then I suggest using 
+        slack.com/apps/A0F7XDUAZ-incoming-webhooks for creating your webhooks
     '''
+
     try:
         stored = json.load(open(slack_channels_file))
     except (NameError, FileNotFoundError):
@@ -176,27 +181,29 @@ def slack_msg_df(text, df, tablefmt='psql'):
     return '\n```'.join([title, body, ''])
 
 
-def alert(text, channel='sandbox', webhook_key=None, alerter='robot'):
-    ''' Sends an alert using guitly spark to a slack channel '''
+def alert(text, channel=None, alerter=None, webhook_key=None):
+    ''' Sends an alert usings guitly spark to a slack channel '''
 
-    if isinstance(alerter, str):
-        alerter = alerters()[alerter]
+    if not webhook_key:
+        if not channel:
+            raise ValueError('One of channel or webhook key must be defined.')
+        webhook_key = channels()[channel]
 
-    if webhook_key is None:
-        webhook_key = channels[channel]
+    pl_dict = {'text': text}
 
-    payload = json.dumps({
-        'text': text,
-        'icon_emoji': alerter.emoji,
-        'username': alerter.username,
-    })
+    if alerter:
+        if isinstance(alerter, str):
+            alerter = alerters()[alerter]
+        pl_dict['icon_emoji'] = alerter.emoji
+        pl_dict['username'] = alerter.username
+
+    payload = json.dumps(pl_dict)
     header = {'Content-type': 'application/json'}
-    webhook_url = f'https://hooks.slack.com/services/T4SQ8RWKF/{webhook_key}'
     
-    return requests.post(webhook_url, data=payload, headers=header)
+    return requests.post(webhook_key, data=payload, headers=header)
 
 
-def alert_monitor(text, channel='sandbox', webhook_key=None, alerter='robot'):
+def alert_monitor(text, channel=None, alerter=None, webhook_key=None):
     ''' 
     a decorator for monitoring functions 
     
